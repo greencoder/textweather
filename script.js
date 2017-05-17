@@ -2,7 +2,7 @@ function main() {
   // Get the location then fetch the JSON
   navigator.geolocation.getCurrentPosition(function(position) {
 
-    var url = "http://forecast.weather.gov/MapClick.php?";
+    var url = "https://forecast.weather.gov/MapClick.php?";
     url += "&rand=" + (new Date()).getTime();
     url += "&lat=" + position.coords.latitude;
     url += "&lon=" + position.coords.longitude;
