@@ -143,3 +143,7 @@ function getCardinal(angle) {
       return "NW";
   return "N";
 }
+
+// run main when we load
+main();
+
