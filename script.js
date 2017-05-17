@@ -1,16 +1,22 @@
 function main() {
+
   // Get the location then fetch the JSON
+  showMessage("Looking up your current location...");
+
   navigator.geolocation.getCurrentPosition(function(position) {
 
+    // Make sure we got a good response back
     if (position.coords && position.coords.latitude && position.coords.longitude) {
       var lat = position.coords.latitude;
       var lng = position.coords.longitude;
+      showMessage("Retrieving weather for your location...");
     }
     else {
-      showError("Could not get current location");
+      showMessage("Could not get current location");
       return;
     }
 
+    // Fetch the NOAA JSON API
     var url = "https://forecast.weather.gov/MapClick.php?";
     url += "&rand=" + (new Date()).getTime();
     url += "&lat=" + lat;
@@ -30,7 +36,7 @@ function main() {
         dewPoint: jsonResponse.currentobservation.Dewp,
         locationName: jsonResponse.location.areaDescription
       }
-      
+
       // The wind gust might be "NA"
       if (jsonResponse.currentobservation.Gust === "NA") {
         observation.windGust = "None";
@@ -38,15 +44,15 @@ function main() {
       else {
         observation.windGust = jsonResponse.currentobservation.Gust + " mph";
       }
-      
+
       // Sometimes the wind direction is "NA"
       if (jsonResponse.currentobservation.Windd === "NA") {
         observation.windDir = "";
       }
       else {
-        observation.windDir = getCardinal(jsonResponse.currentobservation.Windd);
+        observation.windDir = getCardinalDirection(jsonResponse.currentobservation.Windd);
       }
-      
+
       // The pressure might be "NA"
       if (jsonResponse.currentobservation.Altimeter === "NA") {
         observation.pressureMb = "Unknown";
@@ -54,7 +60,7 @@ function main() {
       else {
         observation.pressureMb = jsonResponse.currentobservation.Altimeter + " mb";
       }
-      
+
       // The conditions might be "NA"
       if (jsonResponse.currentobservation.Weather === "NA") {
         observation.conditions = "Unknown";
@@ -62,7 +68,7 @@ function main() {
       else {
         observation.conditions = jsonResponse.currentobservation.Weather;
       }
-      
+
       // The wind chill might be "NA"
       if (jsonResponse.currentobservation.WindChill === "NA") {
         observation.windChill = jsonResponse.currentobservation.Temp;
@@ -70,7 +76,7 @@ function main() {
       else {
         observation.windChill = jsonResponse.currentobservation.WindChill;
       }
-      
+
       // The visibilityu might be "NA"
       if (jsonResponse.currentobservation.Visibility === "NA") {
         observation.visibility = "Unknown";
@@ -80,36 +86,36 @@ function main() {
       }
 
       // Map the data to forecast days (too hard to do in the template)
-      var forecasts = mapForecasts(jsonResponse);
+      var forecasts = createForecasts(jsonResponse);
 
       // Render and show the template
       showWeather(observation, forecasts);
 
     })
     .catch(function(error) {
-      showError("An error occurred");
+      showMessage("An error occurred. NWS might be down.");
     });
 
   }, function(error) {
-    showError("Unable to get current location");
+    showMessage("Unable to get current location");
   });
 }
 
-function showError(message) {
-  document.querySelector("body").innerHTML = message;
+function showMessage(message) {
+  document.querySelector("main").innerHTML = message;
 }
 
 function showWeather(observation, forecasts) {
   var template = document.getElementById("template").innerHTML;
   var rendered = Mustache.render(template, {observation: observation, days: forecasts});
-  document.querySelector("body").innerHTML = rendered;
+  document.querySelector("main").innerHTML = rendered;
 }
 
-function mapForecasts(jsonResponse) {
+function createForecasts(jsonResponse) {
   var numberOfDays = jsonResponse.time.startPeriodName.length;
-  var forecastDays = [];
+  var forecasts = [];
   for (var index=0; index<numberOfDays; index++) {
-    forecastDays.push({
+    forecasts.push({
       period: jsonResponse.time.startPeriodName[index],
       weather: jsonResponse.data.weather[index],
       tempLabel: jsonResponse.time.tempLabel[index],
@@ -117,10 +123,10 @@ function mapForecasts(jsonResponse) {
       text: jsonResponse.data.text[index]
     });
   }
-  return forecastDays;
+  return forecasts;
 }
 
-function getCardinal(angle) {
+function getCardinalDirection(angle) {
   var angle = parseInt(angle);
   var directions = 8;
   var degree = 360 / directions;
@@ -146,4 +152,3 @@ function getCardinal(angle) {
 
 // run main when we load
 main();
-
