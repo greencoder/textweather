@@ -2,10 +2,19 @@ function main() {
   // Get the location then fetch the JSON
   navigator.geolocation.getCurrentPosition(function(position) {
 
+    if (position.coords && position.coords.latitude && position.coords.longitude) {
+      var lat = position.coords.latitude;
+      var lng = position.coords.longitude;
+    }
+    else {
+      showError("Could not get current location");
+      return;
+    }
+
     var url = "https://forecast.weather.gov/MapClick.php?";
     url += "&rand=" + (new Date()).getTime();
-    url += "&lat=" + position.coords.latitude;
-    url += "&lon=" + position.coords.longitude;
+    url += "&lat=" + lat;
+    url += "&lon=" + lng;
     url += "&FcstType=json";
     url += "&_=" + (new Date()).getTime();
 
@@ -15,17 +24,59 @@ function main() {
 
       // Create the observation
       var observation = {
-        windDir: getCardinal(jsonResponse.currentobservation.Windd),
         currentTemp: jsonResponse.currentobservation.Temp,
-        conditions: jsonResponse.currentobservation.Weather,
-        relHuimidity: jsonResponse.currentobservation.Relh,
+        relHumidity: jsonResponse.currentobservation.Relh,
         windSpeed: jsonResponse.currentobservation.Winds,
-        windGust: jsonResponse.currentobservation.Gust,
-        pressureMb: jsonResponse.currentobservation.Altimeter,
         dewPoint: jsonResponse.currentobservation.Dewp,
-        windChill: jsonResponse.currentobservation.WindChill,
-        visibility: jsonResponse.currentobservation.Visibility,
         locationName: jsonResponse.location.areaDescription
+      }
+      
+      // The wind gust might be "NA"
+      if (jsonResponse.currentobservation.Gust === "NA") {
+        observation.windGust = "None";
+      }
+      else {
+        observation.windGust = jsonResponse.currentobservation.Gust + " mph";
+      }
+      
+      // Sometimes the wind direction is "NA"
+      if (jsonResponse.currentobservation.Windd === "NA") {
+        observation.windDir = "";
+      }
+      else {
+        observation.windDir = getCardinal(jsonResponse.currentobservation.Windd);
+      }
+      
+      // The pressure might be "NA"
+      if (jsonResponse.currentobservation.Altimeter === "NA") {
+        observation.pressureMb = "Unknown";
+      }
+      else {
+        observation.pressureMb = jsonResponse.currentobservation.Altimeter + "mb";
+      }
+      
+      // The conditions might be "NA"
+      if (jsonResponse.currentobservation.Weather === "NA") {
+        observation.conditions = "Unknown";
+      }
+      else {
+        observation.conditions = jsonResponse.currentobservation.Weather;
+      }
+      
+      // The wind chill might be "NA"
+      if (jsonResponse.currentobservation.WindChill === "NA") {
+        observation.windChill = jsonResponse.currentobservation.Temp;
+      }
+      else {
+        observation.windChill = jsonResponse.currentobservation.WindChill;
+      }
+      
+      // The visibilityu might be "NA"
+      if (jsonResponse.currentobservation.Visibility === "NA") {
+        observation.visibility = "Unknown";
+      }
+      else {
+        observation.visibility = jsonResponse.currentobservation.Visibility + " miles";
       }
 
       // Map the data to forecast days (too hard to do in the template)
