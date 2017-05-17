@@ -1,0 +1,55 @@
+<html>
+<head>
+
+<meta property="og:title" content="Text Weather" />
+<meta property="og:url" content="https://gfstext.com" />
+<meta property="og:image" content="icon.png" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="stylesheet" href="style.css" />
+
+<script src="mustache.min.js"></script>
+<script src="script.js"></script>
+
+<script>
+  window.onload = main;
+</script>
+
+</head>
+<body>
+
+  Loading Weather for Current Location...
+
+  <script id="template" type="x-tmpl-mustache">
+
+  <h1>Weather for {{ observation.locationName }} </h1>
+
+  <section>
+    <h2>Current Conditions</h2>
+    Temperature: {{ observation.currentTemp }}°F<br/>
+    Weather: {{ observation.conditions }}<br/>
+    Relative Humidity: {{ observation.relHumidity }}%<br/>
+    Wind Speed: {{ observation.windDir }} {{ observation.windSpeed }} mph<br/>
+    Wind Gust: {{ observation.windGust }} mph<br/>
+    Barometer: {{ observation.pressureMb }} mb<br/>
+    Dew Point: {{ observation.dewPoint }}°F<br/>
+    Wind Chill: {{ observation.windChill }}<br/>
+    Visibility: {{ obvservation.visibility }} miles<br/>
+  </section>
+
+  <section>
+    <h2>Forecast</h2>
+    {{#days }}
+    <p>
+      <span><strong>{{ period }}:</strong> {{ weather }}, {{ tempLabel }} {{ temp }}°F</span><br/>
+      {{ text }}
+    </p>
+    {{/days}}
+    <p>
+  </section>
+
+  </script>
+
+</body>
+</html>
