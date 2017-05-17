@@ -52,7 +52,7 @@ function main() {
         observation.pressureMb = "Unknown";
       }
       else {
-        observation.pressureMb = jsonResponse.currentobservation.Altimeter + "mb";
+        observation.pressureMb = jsonResponse.currentobservation.Altimeter + " mb";
       }
       
       // The conditions might be "NA"
