@@ -7,6 +7,10 @@ body {
   padding-bottom: 50px;
 }
 
+a:link, a:visited, a:hover {
+  color: #06FAF5;
+}
+
 section {
   margin-top: 40px;
   line-height: 1.3em;

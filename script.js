@@ -93,7 +93,7 @@ function main() {
 
     })
     .catch(function(error) {
-      showMessage("An error occurred. NWS might be down.");
+      showMessage("An error occurred. NWS servers might be down.<br/><br/><a href=\"javascript:window.location.reload(true)\">Try again</a>");
     });
 
   }, function(error) {
