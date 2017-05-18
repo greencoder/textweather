@@ -1,58 +1,62 @@
 <html>
-<head>
 
-<title>Text Weather</title>
+  <head>
 
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"> />
-<meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Text Weather</title>
 
-<meta property="og:title" content="Text Weather" />
-<meta property="og:url" content="https://gfstext.com" />
-<meta property="og:image" content="icon.png" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
 
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="stylesheet" href="style.css" />
+    <meta property="og:title" content="Text Weather" />
+    <meta property="og:url" content="https://gfstext.com" />
+    <meta property="og:image" content="icon.png" />
 
-</head>
-<body>
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="stylesheet" href="style.css" />
 
-  <main>
-  Loading Weather for Current Location...
-  </main>
+  </head>
 
-  <script id="template" type="x-tmpl-mustache">
+  <body>
 
-  <h1>Weather for {{ observation.locationName }} </h1>
+    <main><!-- Template Renders Here --></main>
 
-  <section>
+    <script id="template" type="x-tmpl-mustache">
+
+    <h1>Weather for {{ observation.locationName }} </h1>
+
     <h2>Current Conditions</h2>
-    Temperature: {{ observation.currentTemp }}° F<br/>
-    Weather: {{ observation.conditions }}<br/>
-    Relative Humidity: {{ observation.relHumidity }}%<br/>
-    Wind Speed: {{ observation.windDir }} {{ observation.windSpeed }} mph<br/>
-    Wind Gust: {{ observation.windGust }}<br/>
-    Barometer: {{ observation.pressureMb }}<br/>
-    Dew Point: {{ observation.dewPoint }}° F<br/>
-    Wind Chill: {{ observation.windChill }}° F<br/>
-    Visibility: {{ observation.visibility }}<br/>
-  </section>
 
-  <section>
+    <section id="conditions">
+      <p><strong>{{ observation.conditions }}</strong></p>
+      <p>
+        Temperature: {{ observation.currentTemp }}° F<br/>
+        Humidity: {{ observation.relHumidity }}%<br/>
+        Wind Speed: {{ observation.windDir }} {{ observation.windSpeed }} mph<br/>
+        Wind Gust: {{ observation.windGust }}<br/>
+        Barometer: {{ observation.pressure }}<br/>
+        Dew Point: {{ observation.dewPoint }}° F<br/>
+        Wind Chill: {{ observation.windChill }}° F<br/>
+        Visibility: {{ observation.visibility }}<br/>
+      </p>
+    </section>
+
     <h2>Forecast</h2>
-    {{#days }}
-    <p>
-      <span><strong>{{ period }}:</strong> {{ weather }}, {{ tempLabel }} {{ temp }}°F</span><br/>
-      {{ text }}
-    </p>
-    {{/days}}
-    <p>
-  </section>
 
-  </script>
+    <section id="forecasts">
+      {{#days }}
+      <p>
+        <span><strong>{{ period }}:</strong> {{ weather }}, {{ tempLabel }} {{ temp }}°F</span><br/>
+        {{ text }}
+      </p>
+      {{/days}}
+      <p>
+    </section>
 
-  <script src="mustache.min.js"></script>
-  <script src="script.js"></script>
+    </script>
 
-</body>
+    <script src="mustache.min.js"></script>
+    <script src="script.js"></script>
+
+  </body>
 </html>
