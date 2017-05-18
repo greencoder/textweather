@@ -77,7 +77,7 @@ function main() {
         observation.windChill = jsonResponse.currentobservation.WindChill;
       }
 
-      // The visibilityu might be "NA"
+      // The visibility might be "NA"
       if (jsonResponse.currentobservation.Visibility === "NA") {
         observation.visibility = "Unknown";
       }
@@ -97,20 +97,23 @@ function main() {
     });
 
   }, function(error) {
-    showMessage("Unable to get current location");
+    showMessage("Unable to get your current location");
   });
 }
 
+// Put a string message into the <main> tag
 function showMessage(message) {
   document.querySelector("main").innerHTML = message;
 }
 
+// Render the weather template and put the result in the <main> tag
 function showWeather(observation, forecasts) {
   var template = document.getElementById("template").innerHTML;
   var rendered = Mustache.render(template, {observation: observation, days: forecasts});
   document.querySelector("main").innerHTML = rendered;
 }
 
+// Take the data arrays and combine them into a forecast object for each day
 function createForecasts(jsonResponse) {
   var numberOfDays = jsonResponse.time.startPeriodName.length;
   var forecasts = [];
@@ -126,6 +129,7 @@ function createForecasts(jsonResponse) {
   return forecasts;
 }
 
+// Take a compass direction (0-360) and return the cardinal direction (N, S, E, W, etc.)
 function getCardinalDirection(angle) {
   var angle = parseInt(angle);
   var directions = 8;
@@ -150,5 +154,5 @@ function getCardinalDirection(angle) {
   return "N";
 }
 
-// run main when we load
+// Run main when we load this script
 main();
