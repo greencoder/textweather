@@ -4,7 +4,6 @@ body {
   font-family: monospace;
   font-size: 18px;
   margin: 25px;
-  padding-bottom: 50px;
 }
 
 a:link, a:visited, a:hover {
@@ -12,7 +11,8 @@ a:link, a:visited, a:hover {
 }
 
 section {
-  margin-top: 40px;
+  margin-top: 20px;
+  margin-bottom: 30px;
   line-height: 1.3em;
 }
 
@@ -22,10 +22,12 @@ section p {
 
 h1 {
   color: #fff;
+  font-size: 1.6em;
 }
 
 h2 {
   color: #70E566;
+  font-size: 1.4em;
 }
 
 hr {
