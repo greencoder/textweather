@@ -199,7 +199,7 @@ var curLocation = locationFromWindowHash();
 // If we don't have a location, go get one
 if (!curLocation.lat || !curLocation.lng) {
   showMessage("Finding your current location...");
-  queryLocation(function(location) {
+  queryLocation(function(curLocation) {
     // Add the location fragement to the URL for bookmarking
     window.location.hash = curLocation.lat.toString() + "," + curLocation.lng.toString();
     // Call the API and show the results
