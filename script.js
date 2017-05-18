@@ -16,7 +16,7 @@ function main() {
       return;
     }
 
-    // Fetch the NOAA JSON API
+    // Call the NOAA JSON API
     var url = "https://forecast.weather.gov/MapClick.php?";
     url += "&rand=" + (new Date()).getTime();
     url += "&lat=" + lat;
@@ -24,81 +24,57 @@ function main() {
     url += "&FcstType=json";
     url += "&_=" + (new Date()).getTime();
 
-    fetch(url).then(function(response) {
-      return response.json();
-    }).then(function(jsonResponse) {
+    // Note: I'd prefer to use fetch(), but old versions of Mobile Safari don't support it
+    var xhr = new XMLHttpRequest();
 
-      // Create the observation
-      var observation = {
-        currentTemp: jsonResponse.currentobservation.Temp,
-        relHumidity: jsonResponse.currentobservation.Relh,
-        windSpeed: jsonResponse.currentobservation.Winds,
-        dewPoint: jsonResponse.currentobservation.Dewp,
-        locationName: jsonResponse.location.areaDescription
-      }
+    // Timeout after 15 seconds
+    xhr.timeout = 15 * 1000;
 
-      // The wind gust might be "NA"
-      if (jsonResponse.currentobservation.Gust === "NA") {
-        observation.windGust = "None";
+    // When we get the response back
+    xhr.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        try {
+          var jsonResponse = JSON.parse(xhr.responseText);
+          // Make sure we didnt' get a 200 response with a failure message
+          if (jsonResponse.hasOwnProperty("success") && jsonResponse.success === false) {
+            showError("Bad response returned from NWS.");
+            return;
+          }
+        }
+        catch(e) {
+          showError("Bad response returned from NWS.");
+          return;
+        }
+        var observation = createObservation(jsonResponse);
+        var forecasts = createForecasts(jsonResponse);
+        showWeather(observation, forecasts);
       }
-      else {
-        observation.windGust = jsonResponse.currentobservation.Gust + " mph";
-      }
+    }
 
-      // Sometimes the wind direction is "NA"
-      if (jsonResponse.currentobservation.Windd === "NA") {
-        observation.windDir = "";
-      }
-      else {
-        observation.windDir = getCardinalDirection(jsonResponse.currentobservation.Windd);
-      }
+    // If the request errors
+    xhr.onerror = function(error) {
+      showError("An error occurred. NWS servers might be down.");
+    }
 
-      // The pressure might be "NA"
-      if (jsonResponse.currentobservation.Altimeter === "NA") {
-        observation.pressureMb = "Unknown";
-      }
-      else {
-        observation.pressureMb = jsonResponse.currentobservation.Altimeter + " mb";
-      }
+    // If the request times out
+    xhr.ontimeout = function(error) {
+      showError("Could not reach NWS servers.");
+    }
 
-      // The conditions might be "NA"
-      if (jsonResponse.currentobservation.Weather === "NA") {
-        observation.conditions = "Unknown";
-      }
-      else {
-        observation.conditions = jsonResponse.currentobservation.Weather;
-      }
-
-      // The wind chill might be "NA"
-      if (jsonResponse.currentobservation.WindChill === "NA") {
-        observation.windChill = jsonResponse.currentobservation.Temp;
-      }
-      else {
-        observation.windChill = jsonResponse.currentobservation.WindChill;
-      }
-
-      // The visibility might be "NA"
-      if (jsonResponse.currentobservation.Visibility === "NA") {
-        observation.visibility = "Unknown";
-      }
-      else {
-        observation.visibility = jsonResponse.currentobservation.Visibility + " miles";
-      }
-
-      // Map the data to forecast days (too hard to do in the template)
-      var forecasts = createForecasts(jsonResponse);
-
-      // Render and show the template
-      showWeather(observation, forecasts);
-
-    })
-    .catch(function(error) {
-      showMessage("An error occurred. NWS servers might be down.<br/><br/><a href=\"javascript:window.location.reload(true)\">Try again</a>");
-    });
+    // Send the request off
+    xhr.open("GET", url, true);
+    xhr.send();
 
   }, function(error) {
-    showMessage("Unable to get your current location");
+    showMessage("Unable to get your current location.");
   });
+
+}
+
+// Put an error message into the <main> tag with a "try again" link
+function showError(message) {
+  var errorMessage = message + "<br/><br/><a href=\"javascript:window.location.reload(true)\">Try again</a>";
+  document.querySelector("main").innerHTML = errorMessage;
 }
 
 // Put a string message into the <main> tag
@@ -111,6 +87,55 @@ function showWeather(observation, forecasts) {
   var template = document.getElementById("template").innerHTML;
   var rendered = Mustache.render(template, {observation: observation, days: forecasts});
   document.querySelector("main").innerHTML = rendered;
+}
+
+// Creates an observation object from the API response
+function createObservation(jsonResponse) {
+  var observation = {
+    currentTemp: jsonResponse.currentobservation.Temp,
+    relHumidity: jsonResponse.currentobservation.Relh,
+    windSpeed: jsonResponse.currentobservation.Winds,
+    dewPoint: jsonResponse.currentobservation.Dewp,
+    locationName: jsonResponse.location.areaDescription,
+    windGust: jsonResponse.currentobservation.Gust + " mph",
+    windDir: getCardinalDirection(jsonResponse.currentobservation.Windd),
+    pressure: jsonResponse.currentobservation.Altimeter + " mb",
+    conditions: jsonResponse.currentobservation.Weather,
+    windChill: jsonResponse.currentobservation.WindChill,
+    visibility: jsonResponse.currentobservation.Visibility + " miles"
+  }
+
+  // The wind gust might be "NA"
+  if (jsonResponse.currentobservation.Gust === "NA") {
+    observation.windGust = "None";
+  }
+
+  // Sometimes the wind direction is "NA"
+  if (jsonResponse.currentobservation.Windd === "NA") {
+    observation.windDir = "";
+  }
+
+  // The pressure might be "NA"
+  if (jsonResponse.currentobservation.Altimeter === "NA") {
+    observation.pressure = "Unknown";
+  }
+
+  // The conditions might be "NA"
+  if (jsonResponse.currentobservation.Weather === "NA") {
+    observation.conditions = "Unknown";
+  }
+
+  // The wind chill might be "NA"
+  if (jsonResponse.currentobservation.WindChill === "NA") {
+    observation.windChill = jsonResponse.currentobservation.Temp;
+  }
+
+  // The visibility might be "NA"
+  if (jsonResponse.currentobservation.Visibility === "NA") {
+    observation.visibility = "Unknown";
+  }
+
+  return observation;
 }
 
 // Take the data arrays and combine them into a forecast object for each day
