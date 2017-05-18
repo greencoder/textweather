@@ -1,74 +1,84 @@
-function main() {
+// Calls the NOAA API for the given lat, long
+function fetchNoaa(curLocation, callbackSuccess, callbackError) {
 
-  // Get the location then fetch the JSON
-  showMessage("Looking up your current location...");
+  // Construct the URL
+  var url = "https://forecast.weather.gov/MapClick.php?";
+  url += "&rand=" + (new Date()).getTime();
+  url += "&lat=" + curLocation.lat;
+  url += "&lon=" + curLocation.lng;
+  url += "&FcstType=json";
+  url += "&_=" + (new Date()).getTime();
 
+  // Note: I'd prefer to use fetch(), but old versions of Mobile Safari don't support it
+  var xhr = new XMLHttpRequest();
+
+  // Timeout after 15 seconds
+  xhr.timeout = 15 * 1000;
+
+  // When we get the response back
+  xhr.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      try {
+        var jsonResponse = JSON.parse(xhr.responseText);
+        // Make sure we didnt' get a 200 response with a failure message
+        if (jsonResponse.hasOwnProperty("success") && jsonResponse.success === false) {
+          callbackError("Bad response returned from NWS.");
+          return;
+        }
+        else {
+          callbackSuccess(jsonResponse);
+          return;
+        }
+      }
+      catch(e) {
+        callbackError("Bad response returned from NWS.");
+        return;
+      }
+    }
+  }
+
+  // If the request errors
+  xhr.onerror = function(error) {
+    callbackError("An error occurred. NWS servers might be down.");
+    return;
+  }
+
+  // If the request times out
+  xhr.ontimeout = function(error) {
+    callbackError("Could not reach NWS servers.");
+    return;
+  }
+
+  // Send the request off
+  xhr.open("GET", url, true);
+  xhr.send();
+
+}
+
+// Parses the NOAA API JSON, renders the output template, then puts it in the DOM
+function renderWeather(jsonResponse) {
+  var observation = createObservation(jsonResponse);
+  var forecasts = createForecasts(jsonResponse);
+  var template = document.getElementById("template").innerHTML;
+  var rendered = Mustache.render(template, {observation: observation, days: forecasts});
+  document.querySelector("main").innerHTML = rendered;
+}
+
+// Uses the Geolocation API to get current location
+function queryLocation(callbackSuccess, callbackError) {
   navigator.geolocation.getCurrentPosition(function(position) {
-
     // Make sure we got a good response back
     if (position.coords && position.coords.latitude && position.coords.longitude) {
       var lat = position.coords.latitude;
       var lng = position.coords.longitude;
-      showMessage("Retrieving weather for your location...");
+      callbackSuccess({ lat: lat, lng: lng });
     }
     else {
-      showMessage("Could not get current location");
-      return;
+      callbackError("Could not get current location");
     }
-
-    // Call the NOAA JSON API
-    var url = "https://forecast.weather.gov/MapClick.php?";
-    url += "&rand=" + (new Date()).getTime();
-    url += "&lat=" + lat;
-    url += "&lon=" + lng;
-    url += "&FcstType=json";
-    url += "&_=" + (new Date()).getTime();
-
-    // Note: I'd prefer to use fetch(), but old versions of Mobile Safari don't support it
-    var xhr = new XMLHttpRequest();
-
-    // Timeout after 15 seconds
-    xhr.timeout = 15 * 1000;
-
-    // When we get the response back
-    xhr.onreadystatechange = function() {
-      if (this.readyState == 4 && this.status == 200) {
-        try {
-          var jsonResponse = JSON.parse(xhr.responseText);
-          // Make sure we didnt' get a 200 response with a failure message
-          if (jsonResponse.hasOwnProperty("success") && jsonResponse.success === false) {
-            showError("Bad response returned from NWS.");
-            return;
-          }
-        }
-        catch(e) {
-          showError("Bad response returned from NWS.");
-          return;
-        }
-        var observation = createObservation(jsonResponse);
-        var forecasts = createForecasts(jsonResponse);
-        showWeather(observation, forecasts);
-      }
-    }
-
-    // If the request errors
-    xhr.onerror = function(error) {
-      showError("An error occurred. NWS servers might be down.");
-    }
-
-    // If the request times out
-    xhr.ontimeout = function(error) {
-      showError("Could not reach NWS servers.");
-    }
-
-    // Send the request off
-    xhr.open("GET", url, true);
-    xhr.send();
-
   }, function(error) {
-    showMessage("Unable to get your current location.");
+    callbackError("Unable to get your current location.");
   });
-
 }
 
 // Put an error message into the <main> tag with a "try again" link
@@ -80,13 +90,6 @@ function showError(message) {
 // Put a string message into the <main> tag
 function showMessage(message) {
   document.querySelector("main").innerHTML = message;
-}
-
-// Render the weather template and put the result in the <main> tag
-function showWeather(observation, forecasts) {
-  var template = document.getElementById("template").innerHTML;
-  var rendered = Mustache.render(template, {observation: observation, days: forecasts});
-  document.querySelector("main").innerHTML = rendered;
 }
 
 // Creates an observation object from the API response
@@ -179,5 +182,44 @@ function getCardinalDirection(angle) {
   return "N";
 }
 
-// Run main when we load this script
-main();
+// Looks in the window.hash to see if we have coordinates
+function locationFromWindowHash() {
+  if (window.location.hash) {
+    var parts = window.location.hash.substring(1).split(",");
+    if (parts.length === 2) {
+      return { lat: parts[0], lng: parts[1] }
+    }
+  }
+  return { lat: null, lng: null };
+}
+
+// Try to get the lat,lng from the URL
+var curLocation = locationFromWindowHash();
+
+// If we don't have a location, go get one
+if (!curLocation.lat || !curLocation.lng) {
+  showMessage("Finding your current location...");
+  queryLocation(function(location) {
+    // Add the location fragement to the URL for bookmarking
+    window.location.hash = curLocation.lat.toString() + "," + curLocation.lng.toString();
+    // Call the API and show the results
+    showMessage("Retrieving current weather from NOAA...");
+    fetchNoaa(curLocation, function(response) {
+      renderWeather(response);
+    }, function(error) {
+      showError("Could not fetch weather from NOAA.");
+    }); // fetchNoaa
+  }, function(error) {
+    showError("Could not get your current location.");
+  }); // queryLocation
+}
+
+// We do have a location, so just use it
+else {
+  showMessage("Retrieving current weather from NOAA...");
+  fetchNoaa(curLocation, function(response) {
+    renderWeather(response);
+  }, function(error) {
+    showError("Could not fetch weather from NOAA.");
+  });
+}
