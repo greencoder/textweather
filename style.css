@@ -1,28 +1,41 @@
+html {
+  width: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
 body {
   background-color: #000;
   color: #EFEFEF;
   font-family: monospace;
   font-size: 18px;
-  margin: 25px;
+  margin: 0px;
+  padding: 0px;
 }
 
 a:link, a:visited, a:hover {
   color: #06FAF5;
 }
 
+main {
+  margin: 0px;
+  padding: 15px;
+  
+}
+
 section {
-  margin-top: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   line-height: 1.3em;
 }
 
 section p {
-  margin-bottom: 25px;
+  margin-bottom: 15px;
 }
 
 h1 {
   color: #fff;
   font-size: 1.6em;
+  margin-top: 5px;
 }
 
 h2 {
