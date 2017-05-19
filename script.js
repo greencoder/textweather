@@ -175,6 +175,7 @@ function getCardinalDirection(angle) {
 // Runs when we start
 showMessage("Finding your current location...");
 
+// Get the user's current location
 queryLocation(function(currentLocation) {
 
   // Call the API and show the results
