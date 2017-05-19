@@ -1,11 +1,11 @@
 // Calls the NOAA API for the given lat, long
-function fetchNoaa(curLocation, callbackSuccess, callbackError) {
+function fetchNoaa(currentLocation, callbackSuccess, callbackError) {
 
   // Construct the URL
   var url = "https://forecast.weather.gov/MapClick.php?";
   url += "&rand=" + (new Date()).getTime();
-  url += "&lat=" + curLocation.lat;
-  url += "&lon=" + curLocation.lng;
+  url += "&lat=" + currentLocation.lat;
+  url += "&lon=" + currentLocation.lng;
   url += "&FcstType=json";
   url += "&_=" + (new Date()).getTime();
 
@@ -92,50 +92,40 @@ function showMessage(message) {
   document.querySelector("main").innerHTML = message;
 }
 
+// Checks to see if the value is "NA", which happens often
+function valueOrUnknown(value, suffix) {
+  if (value === "NA" || !value) {
+    return "Unknown";
+  }
+  if (suffix) {
+    return value + suffix;
+  }
+  return value;
+}
+
 // Creates an observation object from the API response
 function createObservation(jsonResponse) {
   var observation = {
-    currentTemp: jsonResponse.currentobservation.Temp,
-    relHumidity: jsonResponse.currentobservation.Relh,
-    windSpeed: jsonResponse.currentobservation.Winds,
-    dewPoint: jsonResponse.currentobservation.Dewp,
-    locationName: jsonResponse.location.areaDescription,
-    windGust: jsonResponse.currentobservation.Gust + " mph",
-    windDir: getCardinalDirection(jsonResponse.currentobservation.Windd),
-    pressure: jsonResponse.currentobservation.Altimeter + " mb",
-    conditions: jsonResponse.currentobservation.Weather,
-    windChill: jsonResponse.currentobservation.WindChill,
-    visibility: jsonResponse.currentobservation.Visibility + " miles"
+    currentTemp: valueOrUnknown(jsonResponse.currentobservation.Temp, "&deg;F"),
+    relHumidity: valueOrUnknown(jsonResponse.currentobservation.Relh, "%"),
+    windSpeed: valueOrUnknown(jsonResponse.currentobservation.Winds),
+    dewPoint: valueOrUnknown(jsonResponse.currentobservation.Dewp, "&deg;F"),
+    locationName: valueOrUnknown(jsonResponse.location.areaDescription),
+    windGust: valueOrUnknown(jsonResponse.currentobservation.Gust, "mph"),
+    windDir: valueOrUnknown(jsonResponse.currentobservation.Windd),
+    pressure: valueOrUnknown(jsonResponse.currentobservation.Altimeter, "mb"),
+    conditions: valueOrUnknown(jsonResponse.currentobservation.Weather),
+    windChill: valueOrUnknown(jsonResponse.currentobservation.WindChill, "&deg;F"),
+    visibility: valueOrUnknown(jsonResponse.currentobservation.Visibility, " miles")
   }
 
-  // The wind gust might be "NA"
-  if (jsonResponse.currentobservation.Gust === "NA") {
-    observation.windGust = "None";
+  // Create the wind speed and direction as a string
+  if (observation.windDir !== "Unknown" && observation.windSpeed !== "Unknown") {
+    var direction = getCardinalDirection(observation)
+    observation.windSpeedDir = direction + " @ " + observation.windSpeed + "mph";
   }
-
-  // Sometimes the wind direction is "NA"
-  if (jsonResponse.currentobservation.Windd === "NA") {
-    observation.windDir = "";
-  }
-
-  // The pressure might be "NA"
-  if (jsonResponse.currentobservation.Altimeter === "NA") {
-    observation.pressure = "Unknown";
-  }
-
-  // The conditions might be "NA"
-  if (jsonResponse.currentobservation.Weather === "NA") {
-    observation.conditions = "Unknown";
-  }
-
-  // The wind chill might be "NA"
-  if (jsonResponse.currentobservation.WindChill === "NA") {
-    observation.windChill = jsonResponse.currentobservation.Temp;
-  }
-
-  // The visibility might be "NA"
-  if (jsonResponse.currentobservation.Visibility === "NA") {
-    observation.visibility = "Unknown";
+  else {
+    observation.windSpeedDir = "Unknown";
   }
 
   return observation;
@@ -182,44 +172,24 @@ function getCardinalDirection(angle) {
   return "N";
 }
 
-// Looks in the window.hash to see if we have coordinates
-function locationFromWindowHash() {
-  if (window.location.hash) {
-    var parts = window.location.hash.substring(1).split(",");
-    if (parts.length === 2) {
-      return { lat: parts[0], lng: parts[1] }
-    }
-  }
-  return { lat: null, lng: null };
-}
+// Runs when we start
+showMessage("Finding your current location...");
 
-// Try to get the lat,lng from the URL
-var curLocation = locationFromWindowHash();
+queryLocation(function(currentLocation) {
 
-// If we don't have a location, go get one
-if (!curLocation.lat || !curLocation.lng) {
-  showMessage("Finding your current location...");
-  queryLocation(function(curLocation) {
-    // Add the location fragement to the URL for bookmarking
-    window.location.hash = curLocation.lat.toString() + "," + curLocation.lng.toString();
-    // Call the API and show the results
-    showMessage("Retrieving current weather from NOAA...");
-    fetchNoaa(curLocation, function(response) {
-      renderWeather(response);
-    }, function(error) {
-      showError("Could not fetch weather from NOAA.");
-    }); // fetchNoaa
-  }, function(error) {
-    showError("Could not get your current location.");
-  }); // queryLocation
-}
-
-// We do have a location, so just use it
-else {
+  // Call the API and show the results
   showMessage("Retrieving current weather from NOAA...");
-  fetchNoaa(curLocation, function(response) {
+
+  // Once we have the location, we can call NOAA
+  fetchNoaa(currentLocation, function(response) {
     renderWeather(response);
   }, function(error) {
     showError("Could not fetch weather from NOAA.");
-  });
-}
+  }); // fetchNoaa
+
+  // If there was a problem getting the location
+  }, function(error) {
+    showError("Could not get your current location.");
+  }
+
+); // queryLocation

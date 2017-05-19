@@ -30,18 +30,18 @@
     <section id="conditions">
       <p><strong>{{ observation.conditions }}</strong></p>
       <p>
-        Temperature: {{ observation.currentTemp }}° F<br/>
-        Humidity: {{ observation.relHumidity }}%<br/>
-        Wind Speed: {{ observation.windDir }} {{ observation.windSpeed }} mph<br/>
-        Wind Gust: {{ observation.windGust }}<br/>
-        Barometer: {{ observation.pressure }}<br/>
-        Dew Point: {{ observation.dewPoint }}° F<br/>
-        Wind Chill: {{ observation.windChill }}° F<br/>
-        Visibility: {{ observation.visibility }}<br/>
+        Temperature: {{{ observation.currentTemp }}}<br/>
+        Humidity: {{{ observation.relHumidity }}}<br/>
+        Wind Speed: {{{ observation.windSpeedDir }}}<br/>
+        Wind Gust: {{{ observation.windGust }}}<br/>
+        Barometer: {{{ observation.pressure }}}<br/>
+        Dew Point: {{{ observation.dewPoint }}}<br/>
+        Wind Chill: {{{ observation.windChill }}}<br/>
+        Visibility: {{{ observation.visibility }}}<br/>
       </p>
     </section>
 
-    <h2>Forecast</h2>
+    <h2>Forecasts</h2>
 
     <section id="forecasts">
       {{#days }}
